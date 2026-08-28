@@ -5,6 +5,7 @@ import Petal from "./petal";
 import { isValidPayload, normaliseIssues, encodeTransfer, decodeTransfer, backupFileName, mergeTransferData } from "./backup";
 import type { Status, Profile, Issue, Mood, DiaryEntry, DiaryAction, DiaryEvent, DiaryVault, DailyCheckIn, TransferPayload } from "./backup";
 import { FocusRecommendation,GARDEN_PETAL,InsightDrilldown,InsightRange,InsightSection,LOCK_ITERATIONS,MetricFocus,NotificationDelivery,NotificationResult,SignalGarden,StatusDraft,ThemeId,absoluteWord,addDays,announcePermissionChange,clip,completedAtOf,crisisPattern,dateLabel,dayBefore,dayKey,daysOverdue,daysSince,defaultStatusColors,defaultStatuses,deriveDiaryKey,describeDelivery,describeDiaryChange,describeError,deskLine,deskLines,detectThemes,diaryEventLabel,diaryFonts,diaryPapers,diarySuggestion,fromB64,gentleStep,greetingFor,hasTimePressure,heavyMoods,intensityOf,isCompleteStatus,isOverdue,lookBackWindows,moodLabel,moodName,moodWeight,moods,negatorPattern,notificationWorker,openDiaryVault,openQuestion,osLevelHint,partOfDay,partsOfDay,peopleFromInput,peopleMentioned,permissionListeners,permissionStore,pickFrom,pivotClause,quote,readStoredVault,safeMemoryPreview,saveBackupFile,sealDiary,seed,sendReminderNotification,signatureWords,spanLabel,startOfWeek,statedNeed,statusClass,strongestClause,themeInsight,themeLexicon,themeStep,themes,tidy,titleCaseName,toB64,toDateTimeInput,weekLabel,wordCount,wordStops,workerRegistration,writingPrompts,yearGrid } from "./lib/engine";
+import { initSync } from "./lib/sync";
 
 export default function Home() {
   const [issues, setIssues] = useState<Issue[]>(seed);
@@ -158,6 +159,8 @@ export default function Home() {
     setPixelYear(new Date().getFullYear());
     setHydrated(true);
   }, []);
+  // Mirror the workspace to the cloud and pull newer state from other devices.
+  useEffect(() => { if (hydrated) void initSync(); }, [hydrated]);
   useEffect(() => { if (hydrated) localStorage.setItem("signal-petal-issues", JSON.stringify(issues)); }, [issues, hydrated]);
   useEffect(() => { if (hydrated) localStorage.setItem("signal-petal-statuses", JSON.stringify(statuses)); }, [statuses, hydrated]);
   useEffect(() => { if (hydrated) localStorage.setItem("signal-petal-status-colors", JSON.stringify(statusColors)); }, [statusColors, hydrated]);

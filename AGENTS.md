@@ -28,6 +28,27 @@ None required. The app is fully self-contained / client-side. `chatgpt-auth.ts`
 is a server helper that reads request headers injected by an external control
 plane; it is not used in local dev and needs no credentials.
 
+## Cloud sync
+
+Local-first with an optional cloud mirror. `d1: "DB"` in `.openai/hosting.json`
+enables a local D1 (Miniflare) in dev; on the real platform the control plane
+injects the binding.
+
+- `app/api/state/route.ts` — GET/POST a single JSON blob per user in the
+  `app_state` table (`db/schema.ts`). Identity is the ChatGPT user id header when
+  present, else a per-browser device id (`x-device-id`). Table is created
+  idempotently via `db/index.ts`'s `ensureStateSchema` — no migration step needed.
+- `app/lib/sync.ts` — client layer. On load: pull; if the cloud is newer than the
+  last sync, apply + reload to re-hydrate (existing local data is never clobbered
+  on first sync). Otherwise push local up. Writes are mirrored on a 5s interval
+  and on `pagehide`. `signal-petal-device-id` / `signal-petal-last-sync` and the
+  daily reminder-day keys are excluded from the synced blob.
+- Wired into `app/page.tsx` via `useEffect(() => { if (hydrated) initSync(); })`.
+
+Note: vinext keeps a PID lock at `.vinext/dev/lock.json` (in the repo, so it
+survives container recreation and collides with a live PID in the fresh
+container). The compose command clears it before `pnpm dev`.
+
 ## Verifying
 
 - `curl -sf -H "Host: external-preview.example.com" http://localhost:3000/`

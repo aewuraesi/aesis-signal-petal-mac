@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
+import { sql } from "drizzle-orm";
 import * as schema from "./schema";
 
 export function getDb() {
@@ -10,4 +11,12 @@ export function getDb() {
   }
 
   return drizzle(env.DB, { schema });
+}
+
+// Idempotent: the app_state table is created on first use so the sync route works
+// without a separate migration step in local dev.
+export async function ensureStateSchema() {
+  const db = getDb();
+  await db.run(sql`CREATE TABLE IF NOT EXISTS app_state (user_id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL)`);
+  return db;
 }
